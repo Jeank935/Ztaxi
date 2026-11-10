@@ -1,8 +1,12 @@
 # Ztaxi
 
-Base Flutter importada de Elite Taxi bajo licencia MIT. Consulta [IMPORTACION-ZTAXI.md](IMPORTACION-ZTAXI.md) para la procedencia, la configuración pendiente y las limitaciones conocidas. Esta copia aún requiere adaptación y validación antes de operar.
+Base Flutter importada de Elite Taxi bajo licencia MIT. La integración de MapLibre, los comandos de prueba y sus licencias están en [MAPAS.md](MAPAS.md). Consulta [IMPORTACION-ZTAXI.md](IMPORTACION-ZTAXI.md) para la procedencia, la configuración pendiente y las limitaciones conocidas. Esta copia aún requiere adaptación y validación antes de operar.
 
 ---
+
+## Documentación original de referencia
+
+Las instrucciones de mapas y ejecución vigentes están en `MAPAS.md`; el texto siguiente se conserva como referencia del proyecto de origen.
 
 # 🚕 Elite Taxi App
 

@@ -1,7 +1,4 @@
 class AppConstant {
- static const kGoogleApiKey = "YOUR_GOOGLE_MAPS_API_KEY";
-
-
   static const String helloNiceToMeetYou = 'Hello , Nice to meet you';
   static const String getMovingWhiteGreenTaxi = 'Get moving with Elite taxi';
   static const String enterMobileNumber = 'Enter your mobile number';

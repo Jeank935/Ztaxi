@@ -7,12 +7,12 @@ Este repositorio contiene la base Flutter original, pendiente de adaptar y valid
 ## Configuración pendiente
 
 - Configurar un proyecto propio de Firebase con FlutterFire y regenerar `lib/firebase_options.dart` y `firebase.json`; los identificadores originales aún son referencias del proyecto de origen.
-- Sustituir `YOUR_FIREBASE_API_KEY` y `YOUR_GOOGLE_MAPS_API_KEY` por la configuración propia correspondiente. Las claves originales se retiraron de los archivos fuente antes de publicar esta copia.
+- La nueva pantalla usa MapLibre/OpenFreeMap y ya no requiere claves de Google Maps. Firebase sigue pendiente para las funciones con servidor; consulta `MAPAS.md`.
 - Revisar restricciones, permisos y facturación de los servicios elegidos antes de usarlos.
 - Los resultados de compilación, configuraciones locales y archivos de firma no se versionan.
 
 ## Trabajo pendiente antes de un piloto
 
-La versión importada tiene funciones incompletas y problemas conocidos: el botón de confirmar viaje no crea una solicitud, el acceso y los perfiles necesitan revisión, y el código de tarjetas guarda número y CVV en Firestore. No usar datos de tarjetas reales; sustituir ese flujo por una pasarela con tokenización antes de habilitar pagos.
+El código de origen tiene funciones incompletas y problemas conocidos: la solicitud de viajes y el acceso real necesitan trabajo, y el código heredado de tarjetas guarda número y CVV en Firestore. La nueva pantalla de MapLibre permite revisar puntos y no presenta una solicitud de taxi ni ofrece pagos. No usar datos de tarjetas reales; sustituir ese flujo por una pasarela con tokenización antes de habilitar pagos.
 
 Consulta `SETUP.md` para la guía original. No se ha validado en esta importación el inicio de sesión, los viajes ni los pagos con servicios reales.
