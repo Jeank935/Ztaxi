@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,11 +10,23 @@ import 'driver_repository.dart';
 
 const _pendingStatus = 'pendiente';
 
+// Without these limits a weak connection keeps the driver on the spinner:
+// Storage retries uploads for 10 minutes and Firestore waits for the server.
+const _uploadRetryTime = Duration(seconds: 30);
+const _submitTimeout = Duration(seconds: 60);
+
+const _connectionError =
+    'No se pudo enviar el registro. Revisa tu conexión e inténtalo de nuevo.';
+
 /// Server mode storage. Not validated yet: it needs Ztaxi's own Firebase
-/// project and Storage rules that limit `drivers/{uid}` to its owner.
+/// project and security rules that:
+/// - limit Storage `drivers/{uid}` to its owner (and reviewers);
+/// - only accept `driver_status: 'pendiente'` from the app, so a driver
+///   cannot approve themselves.
 ///
 /// Keeps the legacy field names in `users/{uid}` so existing documents remain
-/// readable.
+/// readable. License and registration photos are stored as Storage paths, not
+/// download links, because a download link bypasses Storage rules.
 class FirestoreDriverRepository implements DriverRepository {
   FirestoreDriverRepository({
     FirebaseAuth? auth,
@@ -21,7 +34,9 @@ class FirestoreDriverRepository implements DriverRepository {
     FirebaseStorage? storage,
   }) : _auth = auth ?? FirebaseAuth.instance,
        _firestore = firestore ?? FirebaseFirestore.instance,
-       _storage = storage ?? FirebaseStorage.instance;
+       _storage = storage ?? FirebaseStorage.instance {
+    _storage.setMaxUploadRetryTime(_uploadRetryTime);
+  }
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
@@ -44,43 +59,54 @@ class FirestoreDriverRepository implements DriverRepository {
   Future<void> submit(DriverApplication application) async {
     final uid = _requireUid();
     try {
-      final folder = _storage.ref('drivers/$uid');
-      final image = await _upload(folder.child('perfil'), application.photo);
-      final license = await _uploadOptional(
-        folder.child('licencia'),
-        application.licensePhoto,
+      await _send(uid, application).timeout(_submitTimeout);
+    } on TimeoutException catch (error, stackTrace) {
+      log(
+        'Driver registration timed out',
+        error: error,
+        stackTrace: stackTrace,
       );
-      final registration = await _uploadOptional(
-        folder.child('matricula'),
-        application.registrationPhoto,
-      );
-      final vehicle = application.vehicle;
-      await _userDoc(uid).set({
-        'name': application.name,
-        'image': image,
-        'isDriver': true,
-        'vehicle_make': vehicle.make,
-        'vehicle_model': vehicle.model,
-        // The legacy registration stored the year as text.
-        'vehicle_year': vehicle.year.toString(),
-        'vehicle_number': vehicle.plate,
-        'vehicle_color': vehicle.color,
-        'cooperative': application.cooperative,
-        'unit_number': application.unitNumber,
-        if (license != null) 'license_url': license,
-        if (registration != null) 'registration_url': registration,
-        'driver_status': _pendingStatus,
-      }, SetOptions(merge: true));
+      throw const DriverRegistrationException(_connectionError);
     } on FirebaseException catch (error, stackTrace) {
       log(
         'Driver registration failed: ${error.code}',
         error: error,
         stackTrace: stackTrace,
       );
-      throw const DriverRegistrationException(
-        'No se pudo enviar el registro. Revisa tu conexión e inténtalo de nuevo.',
-      );
+      throw const DriverRegistrationException(_connectionError);
     }
+  }
+
+  Future<void> _send(String uid, DriverApplication application) async {
+    final folder = _storage.ref('drivers/$uid');
+    final image = await _upload(folder.child('perfil'), application.photo);
+    final license = await _uploadDocument(
+      folder.child('licencia'),
+      application.licensePhoto,
+    );
+    final registration = await _uploadDocument(
+      folder.child('matricula'),
+      application.registrationPhoto,
+    );
+    final vehicle = application.vehicle;
+    await _userDoc(uid).set({
+      'name': application.name,
+      // Shown to passengers, so it keeps a download link like the legacy code.
+      'image': await image.getDownloadURL(),
+      'isDriver': true,
+      'vehicle_make': vehicle.make,
+      'vehicle_model': vehicle.model,
+      // The legacy registration stored the year as text.
+      'vehicle_year': vehicle.year.toString(),
+      'vehicle_number': vehicle.plate,
+      'vehicle_color': vehicle.color,
+      'cooperative': application.cooperative,
+      'unit_number': application.unitNumber,
+      // Delete stale paths when a document is not sent again.
+      'license_path': license ?? FieldValue.delete(),
+      'registration_path': registration ?? FieldValue.delete(),
+      'driver_status': _pendingStatus,
+    }, SetOptions(merge: true));
   }
 
   @override
@@ -89,14 +115,18 @@ class FirestoreDriverRepository implements DriverRepository {
     return snapshot.data()?['driver_status'] == _pendingStatus;
   }
 
-  Future<String?> _uploadOptional(Reference ref, DriverPhoto? photo) async =>
-      photo == null ? null : _upload(ref, photo);
+  /// Returns the Storage path, or null when the driver did not add the photo.
+  Future<String?> _uploadDocument(Reference ref, DriverPhoto? photo) async {
+    if (photo == null) return null;
+    final uploaded = await _upload(ref, photo);
+    return uploaded.fullPath;
+  }
 
-  Future<String> _upload(Reference ref, DriverPhoto photo) async {
+  Future<Reference> _upload(Reference ref, DriverPhoto photo) async {
     final snapshot = await ref.putData(
       photo.bytes,
       SettableMetadata(contentType: photo.mimeType),
     );
-    return snapshot.ref.getDownloadURL();
+    return snapshot.ref;
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -26,7 +27,87 @@ Future<void> _tapButton(WidgetTester tester, String label) async {
   await tester.pumpAndSettle();
 }
 
+Future<void> _pumpOnboarding(
+  WidgetTester tester,
+  DriverRepository repository,
+) => tester.pumpWidget(
+  MaterialApp(
+    home: DriverOnboardingScreen(
+      repository: repository,
+      demoMode: true,
+      pickPhoto: _fakePicker,
+    ),
+  ),
+);
+
+Future<void> _completePersonalStep(WidgetTester tester) async {
+  await _fill(tester, 'Nombre completo', 'Ana Pérez');
+  await tester.tap(find.text('Elegir foto').first);
+  await tester.pumpAndSettle();
+  await _tapButton(tester, 'Continuar');
+}
+
+Future<void> _reachReview(WidgetTester tester) async {
+  await _completePersonalStep(tester);
+  await _fill(tester, 'Marca', 'Chevrolet');
+  await _fill(tester, 'Modelo', 'Aveo');
+  await _fill(tester, 'Año', '2018');
+  await _fill(tester, 'Placa', 'ZAB1234');
+  await _fill(tester, 'Color', 'Amarillo');
+  await _tapButton(tester, 'Continuar');
+  await _tapButton(tester, 'Revisar');
+}
+
+/// A server that never answers, to observe the sending state.
+class _SlowRepository implements DriverRepository {
+  int submits = 0;
+
+  @override
+  Future<void> submit(DriverApplication application) {
+    submits++;
+    return Completer<void>().future;
+  }
+
+  @override
+  Future<bool> hasPendingApplication() async => false;
+}
+
 void main() {
+  testWidgets('a double tap on send submits the registration once', (
+    tester,
+  ) async {
+    final repository = _SlowRepository();
+    await _pumpOnboarding(tester, repository);
+    await _reachReview(tester);
+
+    final send = find.widgetWithText(FilledButton, 'Enviar registro');
+    await tester.tap(send);
+    await tester.tap(send);
+    await tester.pump();
+
+    expect(repository.submits, 1);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
+
+  testWidgets('back returns to the previous step and keeps the data', (
+    tester,
+  ) async {
+    await _pumpOnboarding(tester, InMemoryDriverRepository());
+    await _completePersonalStep(tester);
+    expect(find.text('Tu vehículo'), findsOneWidget);
+
+    await tester.tap(find.text('Atrás'));
+    await tester.pumpAndSettle();
+    expect(find.text('Tus datos'), findsOneWidget);
+    expect(find.text('Ana Pérez'), findsOneWidget);
+
+    // System back (Android) also goes one step back instead of leaving.
+    await _tapButton(tester, 'Continuar');
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Tus datos'), findsOneWidget);
+  });
+
   testWidgets('demo login leads to the passenger or driver choice', (
     tester,
   ) async {

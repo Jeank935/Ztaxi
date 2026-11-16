@@ -139,6 +139,8 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
   }
 
   Future<void> _submit(DriverApplication application) async {
+    // Two taps can arrive before the rebuild that disables the button.
+    if (_sending) return;
     setState(() => _sending = true);
     try {
       await widget.repository.submit(application);

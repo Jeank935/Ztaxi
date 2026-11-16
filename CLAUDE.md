@@ -63,6 +63,9 @@ It follows the same split as the map layer: the domain types know nothing about 
 
 - `driver_application.dart`: `DriverApplication.create()` validates the input and throws `ArgumentError`. The form uses the same `DriverValidators`, so the two can't disagree. Plates are normalized to `ABC-1234`. Photos are `DriverPhoto` bytes rather than `dart:io File`, because `File` doesn't work on web.
 - `DriverRepository` has two implementations. `InMemoryDriverRepository` is used by the demo. `FirestoreDriverRepository` writes the legacy field names to `users/{uid}`, uploads photos to `drivers/{uid}/…`, and sets `driver_status: 'pendiente'`. It has not been tested against a real Firebase project.
+  - License and registration photos are saved as Storage paths (`license_path`, `registration_path`), not download links, because anyone with a download link can open the file. Only the profile `image` is stored as a link.
+  - Submits time out after 60 s, with a 30 s upload retry limit, so a weak connection can't leave the driver stuck on the spinner.
+  - Its security depends on rules that don't exist yet. Firestore must accept only `driver_status: 'pendiente'` from the app; otherwise a driver could approve themselves. Storage must restrict `drivers/{uid}` to its owner and reviewers.
 - `DriverOnboardingScreen` steps through personal data → vehicle → optional documents → review, then replaces itself with `VerificationPendingScreen`. The `pickPhoto` parameter takes a `PhotoPicker`, which lets tests supply photos without the platform picker.
 
 ### Persistence
