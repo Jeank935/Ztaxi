@@ -1,6 +1,6 @@
-import 'package:elite_taxi_app/utlis/app_constant.dart';
-import 'package:elite_taxi_app/widgets/pinput_widget.dart';
-import 'package:elite_taxi_app/widgets/text_wiget.dart';
+import 'package:ztaxi/utlis/app_constant.dart';
+import 'package:ztaxi/widgets/pinput_widget.dart';
+import 'package:ztaxi/widgets/text_wiget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';

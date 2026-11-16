@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import 'package:elite_taxi_app/controller/auth_controller.dart';
-import 'package:elite_taxi_app/utlis/app_colors.dart';
-import 'package:elite_taxi_app/widgets/green_intro_widget.dart';
+import 'package:ztaxi/controller/auth_controller.dart';
+import 'package:ztaxi/utlis/app_colors.dart';
+import 'package:ztaxi/widgets/green_intro_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';

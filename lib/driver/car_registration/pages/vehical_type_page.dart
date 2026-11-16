@@ -1,4 +1,4 @@
-import 'package:elite_taxi_app/utlis/app_colors.dart';
+import 'package:ztaxi/utlis/app_colors.dart';
 import 'package:flutter/material.dart';
 
 

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:elite_taxi_app/driver/car_registration/car_registration_template.dart';
-import 'package:elite_taxi_app/driver/profile_setup.dart';
-import 'package:elite_taxi_app/home.dart';
-import 'package:elite_taxi_app/models/user_model/user_model.dart';
-import 'package:elite_taxi_app/views/profile_settings.dart';
+import 'package:ztaxi/driver/car_registration/car_registration_template.dart';
+import 'package:ztaxi/driver/profile_setup.dart';
+import 'package:ztaxi/home.dart';
+import 'package:ztaxi/models/user_model/user_model.dart';
+import 'package:ztaxi/views/profile_settings.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';

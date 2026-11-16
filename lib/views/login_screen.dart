@@ -1,6 +1,6 @@
-import 'package:elite_taxi_app/views/otp_verification_screen.dart';
-import 'package:elite_taxi_app/widgets/green_intro_widget.dart';
-import 'package:elite_taxi_app/widgets/login_widget.dart';
+import 'package:ztaxi/views/otp_verification_screen.dart';
+import 'package:ztaxi/widgets/green_intro_widget.dart';
+import 'package:ztaxi/widgets/login_widget.dart';
 import 'package:fl_country_code_picker/fl_country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
