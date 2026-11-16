@@ -45,10 +45,21 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _tripSubscription = widget.tripRepository?.watchActive().listen(
-      (trip) => setState(() => _activeTrip = trip),
-    );
+    _tripSubscription = widget.tripRepository?.watchActive().listen(_showTrip);
   }
+
+  void _showTrip(TripRequest? trip) => setState(() {
+    _activeTrip = trip;
+    // On returning to the map with a request still active, show its points so
+    // they appear on the map and remain after cancelling.
+    if (trip != null) {
+      _selection = TripSelection(
+        pickup: trip.pickup,
+        destination: trip.destination,
+        target: SelectionTarget.destination,
+      );
+    }
+  });
 
   @override
   void dispose() {
@@ -291,6 +302,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   maxHeight: MediaQuery.sizeOf(context).height * 0.60,
                 ),
                 child: SingleChildScrollView(
+                  // A new scroll position per state, so the request panel
+                  // opens at the top instead of at the editor's offset.
+                  key: ValueKey(_activeTrip != null),
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
                   child: switch (_activeTrip) {
                     final trip? => TripStatusPanel(

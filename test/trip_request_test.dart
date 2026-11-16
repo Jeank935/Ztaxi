@@ -74,6 +74,13 @@ void main() {
       expect(second.id, isNot(first.id));
     });
 
+    test('reports an incomplete selection as a request error', () async {
+      await expectLater(
+        repository.request(const TripSelection()),
+        throwsA(isA<TripRequestException>()),
+      );
+    });
+
     test('ignores cancelling a request that is not active', () async {
       final trip = await repository.request(_complete());
       await repository.cancel('otra');

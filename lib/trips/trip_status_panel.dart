@@ -32,7 +32,7 @@ class TripStatusPanel extends StatelessWidget {
               'Buscando conductor…',
               style: Theme.of(
                 context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -42,8 +42,9 @@ class TripStatusPanel extends StatelessWidget {
         'Solicitud simulada. En la demo no hay conductores conectados.',
         style: TextStyle(color: _mutedText),
       ),
-      const SizedBox(height: 14),
+      const SizedBox(height: 12),
       _point(Icons.trip_origin, 'Recogida', trip.pickup.label),
+      const SizedBox(height: 8),
       _point(Icons.location_on_outlined, 'Destino', trip.destination.label),
       const SizedBox(height: 12),
       OutlinedButton(
@@ -54,13 +55,22 @@ class TripStatusPanel extends StatelessWidget {
     ],
   );
 
-  Widget _point(IconData icon, String title, String label) => ListTile(
-    contentPadding: EdgeInsets.zero,
-    leading: Icon(icon, size: 23),
-    title: Text(title, style: const TextStyle(fontSize: 13)),
-    subtitle: Text(
-      label,
-      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-    ),
+  Widget _point(IconData icon, String title, String label) => Row(
+    children: [
+      Icon(icon, size: 22),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(fontSize: 13)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    ],
   );
 }

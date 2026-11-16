@@ -18,7 +18,8 @@ class TripRequestException implements Exception {
 /// Where taxi requests live. The demo keeps them in memory; a Firestore
 /// version will come with Ztaxi's own Firebase project.
 abstract interface class TripRepository {
-  /// Throws [TripRequestException] if another request is still active.
+  /// Throws [TripRequestException] if another request is still active or the
+  /// selection is incomplete.
   Future<TripRequest> request(TripSelection selection);
 
   /// Does nothing if [id] is not the active request.
@@ -43,6 +44,11 @@ class InMemoryTripRepository implements TripRepository {
     if (_active != null) {
       throw const TripRequestException(
         'Ya tienes una solicitud activa. Cancélala para pedir otra.',
+      );
+    }
+    if (!selection.isComplete) {
+      throw const TripRequestException(
+        'Elige una recogida y un destino diferentes.',
       );
     }
     final trip = TripRequest.fromSelection(

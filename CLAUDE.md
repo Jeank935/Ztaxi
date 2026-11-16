@@ -55,6 +55,8 @@ The Zamora bounds appear in two places: `isInZamoraPreview()` and `cameraTargetB
 ### `HomeScreen` is used two ways (`lib/home.dart`)
 
 - As the **trip picker** (default): the user picks pickup and then destination, and a review sheet opens. If a `tripRepository` is passed (the demo passes `InMemoryTripRepository` from `RoleChoiceScreen`), the sheet offers «Solicitar taxi (simulado)». While a request is active, the bottom tray shows `TripStatusPanel` and map taps are ignored. Without a repository (server mode, for now) the screen only previews the points.
+- When `HomeScreen` opens while a request is already active, it restores that request's points. The tray's scroll view is keyed by request state so the status panel always opens at the top.
+- **Testing:** `test/home_trip_test.dart` tests the screen without the native map. It makes the `flutter/assets` style load fail, which leaves `ZamoraMap` in its error state, and calls `ZamoraMap.onSelect` directly. It also clears `rootBundle` before and after each test, because a cached future from one test never completes in the next. The search spinner never settles, so use `pump` with a duration instead of `pumpAndSettle` while a request is active.
 - As the **single-point picker**, when `pointPickerTitle` is set. `ProfileSettingScreen` pushes it and receives the chosen `GeoCoordinate` from `Navigator.pop`.
 
 ### Driver registration (`lib/driver/`)
