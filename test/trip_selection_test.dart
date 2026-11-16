@@ -1,6 +1,6 @@
-import 'package:elite_taxi_app/maps/geo_coordinate.dart';
-import 'package:elite_taxi_app/maps/trip_selection.dart';
-import 'package:elite_taxi_app/models/user_model/user_model.dart';
+import 'package:ztaxi/maps/geo_coordinate.dart';
+import 'package:ztaxi/maps/trip_selection.dart';
+import 'package:ztaxi/models/user_model/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 

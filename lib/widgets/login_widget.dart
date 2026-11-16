@@ -1,5 +1,5 @@
-import 'package:elite_taxi_app/utlis/app_constant.dart';
-import 'package:elite_taxi_app/widgets/text_wiget.dart';
+import 'package:ztaxi/utlis/app_constant.dart';
+import 'package:ztaxi/widgets/text_wiget.dart';
 import 'package:fl_country_code_picker/fl_country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';

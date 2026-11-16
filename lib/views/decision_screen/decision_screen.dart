@@ -1,7 +1,7 @@
-import 'package:elite_taxi_app/controller/auth_controller.dart';
-import 'package:elite_taxi_app/driver/car_registration/car_registration_template.dart';
-import 'package:elite_taxi_app/views/login_screen.dart';
-import 'package:elite_taxi_app/widgets/my_button.dart';
+import 'package:ztaxi/controller/auth_controller.dart';
+import 'package:ztaxi/driver/car_registration/car_registration_template.dart';
+import 'package:ztaxi/views/login_screen.dart';
+import 'package:ztaxi/widgets/my_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
  import '../../widgets/green_intro_widget.dart';

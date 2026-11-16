@@ -8,7 +8,7 @@ Ztaxi is a passenger/driver taxi app for Zamora, Ecuador, built on a fork of the
 
 `MAPAS.md`, `PRODUCT.md` and `DESIGN.md` are the current source of truth. Most of `README.md`, plus `ARCHITECTURE.md`, `SETUP.md` and `CONTRIBUTING.md`, describe the original Elite Taxi project: Google Maps, the `packages/google_api_headers` package (since removed), and `polyline_handler.dart` (since removed). Treat them as historical.
 
-The Dart package name is still `elite_taxi_app`, so imports look like `package:elite_taxi_app/...`. The utilities folder is spelled `lib/utlis/`, not `utils`.
+The Dart package name is `ztaxi`, so imports look like `package:ztaxi/...`. The Android `applicationId`/`namespace` (`com.example.elite_taxi_app`) and the iOS bundle ID (`com.example.eliteTaxiApp`) have not been renamed yet; the final ID is still undecided. The utilities folder is spelled `lib/utlis/`, not `utils`.
 
 ## Commands
 

@@ -1,17 +1,17 @@
 import 'dart:io';
 
-import 'package:elite_taxi_app/controller/auth_controller.dart';
-import 'package:elite_taxi_app/driver/car_registration/pages/document_uploaded_page.dart';
-import 'package:elite_taxi_app/driver/car_registration/pages/location_page.dart';
-import 'package:elite_taxi_app/driver/car_registration/pages/upload_document_page.dart';
-import 'package:elite_taxi_app/driver/car_registration/pages/vehical_color_page.dart';
-import 'package:elite_taxi_app/driver/car_registration/pages/vehical_make.dart';
-import 'package:elite_taxi_app/driver/car_registration/pages/vehical_model_page.dart';
-import 'package:elite_taxi_app/driver/car_registration/pages/vehical_model_year_page.dart';
-import 'package:elite_taxi_app/driver/car_registration/pages/vehical_number_page.dart';
-import 'package:elite_taxi_app/driver/car_registration/pages/vehical_type_page.dart';
-import 'package:elite_taxi_app/driver/verification_pending_screen.dart';
-import 'package:elite_taxi_app/utlis/app_colors.dart';
+import 'package:ztaxi/controller/auth_controller.dart';
+import 'package:ztaxi/driver/car_registration/pages/document_uploaded_page.dart';
+import 'package:ztaxi/driver/car_registration/pages/location_page.dart';
+import 'package:ztaxi/driver/car_registration/pages/upload_document_page.dart';
+import 'package:ztaxi/driver/car_registration/pages/vehical_color_page.dart';
+import 'package:ztaxi/driver/car_registration/pages/vehical_make.dart';
+import 'package:ztaxi/driver/car_registration/pages/vehical_model_page.dart';
+import 'package:ztaxi/driver/car_registration/pages/vehical_model_year_page.dart';
+import 'package:ztaxi/driver/car_registration/pages/vehical_number_page.dart';
+import 'package:ztaxi/driver/car_registration/pages/vehical_type_page.dart';
+import 'package:ztaxi/driver/verification_pending_screen.dart';
+import 'package:ztaxi/utlis/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
