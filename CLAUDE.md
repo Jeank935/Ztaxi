@@ -54,7 +54,7 @@ The Zamora bounds appear in two places: `isInZamoraPreview()` and `cameraTargetB
 
 ### `HomeScreen` is used two ways (`lib/home.dart`)
 
-- As the **trip picker** (default): the user picks pickup and then destination, and a review sheet opens. It does not request a trip.
+- As the **trip picker** (default): the user picks pickup and then destination, and a review sheet opens. If a `tripRepository` is passed (the demo passes `InMemoryTripRepository` from `RoleChoiceScreen`), the sheet offers «Solicitar taxi (simulado)». While a request is active, the bottom tray shows `TripStatusPanel` and map taps are ignored. Without a repository (server mode, for now) the screen only previews the points.
 - As the **single-point picker**, when `pointPickerTitle` is set. `ProfileSettingScreen` pushes it and receives the chosen `GeoCoordinate` from `Navigator.pop`.
 
 ### Driver registration (`lib/driver/`)
@@ -67,6 +67,12 @@ It follows the same split as the map layer: the domain types know nothing about 
   - Submits time out after 60 s, with a 30 s upload retry limit, so a weak connection can't leave the driver stuck on the spinner.
   - Its security depends on rules that don't exist yet. Firestore must accept only `driver_status: 'pendiente'` from the app; otherwise a driver could approve themselves. Storage must restrict `drivers/{uid}` to its owner and reviewers.
 - `DriverOnboardingScreen` steps through personal data → vehicle → optional documents → review, then replaces itself with `VerificationPendingScreen`. The `pickPhoto` parameter takes a `PhotoPicker`, which lets tests supply photos without the platform picker.
+
+### Trip requests (`lib/trips/`)
+
+- `TripRequest.fromSelection()` only accepts a complete `TripSelection` and throws `ArgumentError` otherwise. `TripStatus` is `searchingDriver` or `cancelled`.
+- `TripRepository` exposes `request`, `cancel`, and `watchActive`. Only one request can be active at a time; a second one throws `TripRequestException`. `InMemoryTripRepository.watchActive` takes the snapshot and subscribes inside `onListen`, so a listener can't miss a change. Don't replace it with an `async*` generator, which reintroduces that race. There is no Firestore implementation yet.
+- `TripStatusPanel` never invents a driver, fare, or arrival time.
 
 ### Persistence
 

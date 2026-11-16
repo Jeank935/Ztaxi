@@ -1,14 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:ztaxi/driver/driver_onboarding_screen.dart';
 import 'package:ztaxi/driver/driver_repository.dart';
 import 'package:ztaxi/driver/verification_pending_screen.dart';
 import 'package:ztaxi/home.dart';
+import 'package:ztaxi/trips/trip_repository.dart';
 
 const _mutedText = Color(0xff52615a);
 
 /// Demo: choose between the passenger map and the driver registration.
-/// Registrations live in memory for as long as this screen is open.
+/// Registrations and trip requests live in memory while this screen is open.
 class RoleChoiceScreen extends StatefulWidget {
   const RoleChoiceScreen({super.key});
 
@@ -18,10 +21,19 @@ class RoleChoiceScreen extends StatefulWidget {
 
 class _RoleChoiceScreenState extends State<RoleChoiceScreen> {
   final _drivers = InMemoryDriverRepository();
+  final _trips = InMemoryTripRepository();
+
+  @override
+  void dispose() {
+    unawaited(_trips.dispose());
+    super.dispose();
+  }
 
   void _openPassenger() => Navigator.push(
     context,
-    MaterialPageRoute<void>(builder: (_) => const HomeScreen(demoMode: true)),
+    MaterialPageRoute<void>(
+      builder: (_) => HomeScreen(demoMode: true, tripRepository: _trips),
+    ),
   );
 
   Future<void> _openDriver() async {

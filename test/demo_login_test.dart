@@ -8,7 +8,7 @@ void main() {
   ) async {
     await tester.pumpWidget(const MyApp());
     expect(find.text('Teléfono de prueba'), findsOneWidget);
-    expect(find.text('Modo demo · sin viajes ni cobros'), findsNothing);
+    expect(find.text('Modo demo · viajes simulados, sin cobros'), findsNothing);
     await tester.tap(find.text('Continuar'));
     await tester.pumpAndSettle();
     expect(find.text('Código de prueba'), findsOneWidget);
@@ -16,7 +16,7 @@ void main() {
     await tester.tap(find.text('Entrar'));
     await tester.pumpAndSettle();
     expect(find.text('Escribe el código de prueba 123456.'), findsOneWidget);
-    expect(find.text('Modo demo · sin viajes ni cobros'), findsNothing);
+    expect(find.text('Modo demo · viajes simulados, sin cobros'), findsNothing);
   });
 
   testWidgets(

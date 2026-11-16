@@ -1,9 +1,15 @@
+import 'dart:async';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 
 import 'maps/geo_coordinate.dart';
 import 'maps/map_credits.dart';
 import 'maps/trip_selection.dart';
 import 'maps/zamora_map.dart';
+import 'trips/trip_repository.dart';
+import 'trips/trip_request.dart';
+import 'trips/trip_status_panel.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -12,12 +18,17 @@ class HomeScreen extends StatefulWidget {
     this.pointPickerTitle,
     this.initialPoint,
     this.onOpenProfile,
+    this.tripRepository,
   });
 
   final bool demoMode;
   final String? pointPickerTitle;
   final GeoCoordinate? initialPoint;
   final VoidCallback? onOpenProfile;
+
+  /// When set, the review sheet offers to request a taxi. Without it (server
+  /// mode, for now) the screen only previews points.
+  final TripRepository? tripRepository;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -26,9 +37,60 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _mapKey = GlobalKey<ZamoraMapState>();
   late TripSelection _selection = TripSelection(pickup: widget.initialPoint);
+  StreamSubscription<TripRequest?>? _tripSubscription;
+  TripRequest? _activeTrip;
+  bool _requesting = false;
   bool get _pickingOne => widget.pointPickerTitle != null;
 
+  @override
+  void initState() {
+    super.initState();
+    _tripSubscription = widget.tripRepository?.watchActive().listen(
+      (trip) => setState(() => _activeTrip = trip),
+    );
+  }
+
+  @override
+  void dispose() {
+    unawaited(_tripSubscription?.cancel());
+    super.dispose();
+  }
+
+  Future<void> _requestTrip() async {
+    final repository = widget.tripRepository;
+    if (repository == null || _requesting) return;
+    _requesting = true;
+    try {
+      await repository.request(_selection);
+    } on TripRequestException catch (error) {
+      _showMessage(error.message);
+    } on Exception catch (error, stackTrace) {
+      log('Trip request failed', error: error, stackTrace: stackTrace);
+      _showMessage('No se pudo solicitar el taxi. Inténtalo de nuevo.');
+    } finally {
+      _requesting = false;
+    }
+  }
+
+  Future<void> _cancelTrip(TripRequest trip) async {
+    try {
+      await widget.tripRepository?.cancel(trip.id);
+    } on Exception catch (error, stackTrace) {
+      log('Trip cancel failed', error: error, stackTrace: stackTrace);
+      _showMessage('No se pudo cancelar la solicitud. Inténtalo de nuevo.');
+    }
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   void _choose(GeoCoordinate point) {
+    // Points stay fixed while a request is active.
+    if (_activeTrip != null) return;
     try {
       setState(() => _selection = _selection.choose(point));
     } on ArgumentError {
@@ -69,16 +131,37 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 20),
                     Text('Destino\n${_selection.destination!.label}'),
                     const SizedBox(height: 24),
-                    const Text(
-                      'La ruta por calles y la solicitud de taxi aún están pendientes de conectar. No se ha solicitado un viaje.',
+                    Text(
+                      widget.tripRepository == null
+                          ? 'La ruta por calles y la solicitud de taxi aún están pendientes de conectar. No se ha solicitado un viaje.'
+                          : 'La ruta por calles aún no está conectada. La solicitud es simulada: no se avisa a ningún conductor.',
                     ),
                     const SizedBox(height: 24),
+                    if (widget.tripRepository != null) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            unawaited(_requestTrip());
+                          },
+                          child: const Text('Solicitar taxi (simulado)'),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     SizedBox(
                       width: double.infinity,
-                      child: FilledButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Seguir editando'),
-                      ),
+                      child:
+                          widget.tripRepository == null
+                              ? FilledButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Seguir editando'),
+                              )
+                              : TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Seguir editando'),
+                              ),
                     ),
                   ],
                 ),
@@ -209,78 +292,84 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        widget.pointPickerTitle ??
-                            (pickingPickup
-                                ? '¿Dónde te recogemos?'
-                                : '¿A dónde vamos?'),
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Toca un punto en el mapa.',
-                        style: TextStyle(color: Color(0xff52615a)),
-                      ),
-                      const SizedBox(height: 14),
-                      _pointRow(
-                        'Recogida',
-                        _selection.pickup,
-                        SelectionTarget.pickup,
-                        Icons.trip_origin,
-                      ),
-                      if (!_pickingOne) ...[
+                  child: switch (_activeTrip) {
+                    final trip? => TripStatusPanel(
+                      trip: trip,
+                      onCancel: () => _cancelTrip(trip),
+                    ),
+                    null => Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          widget.pointPickerTitle ??
+                              (pickingPickup
+                                  ? '¿Dónde te recogemos?'
+                                  : '¿A dónde vamos?'),
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
                         const SizedBox(height: 4),
+                        const Text(
+                          'Toca un punto en el mapa.',
+                          style: TextStyle(color: Color(0xff52615a)),
+                        ),
+                        const SizedBox(height: 14),
                         _pointRow(
-                          'Destino',
-                          _selection.destination,
-                          SelectionTarget.destination,
-                          Icons.location_on_outlined,
+                          'Recogida',
+                          _selection.pickup,
+                          SelectionTarget.pickup,
+                          Icons.trip_origin,
                         ),
-                      ],
-                      TextButton.icon(
-                        onPressed: () => _mapKey.currentState?.selectCenter(),
-                        icon: const Icon(
-                          Icons.add_location_alt_outlined,
-                          size: 18,
+                        if (!_pickingOne) ...[
+                          const SizedBox(height: 4),
+                          _pointRow(
+                            'Destino',
+                            _selection.destination,
+                            SelectionTarget.destination,
+                            Icons.location_on_outlined,
+                          ),
+                        ],
+                        TextButton.icon(
+                          onPressed: () => _mapKey.currentState?.selectCenter(),
+                          icon: const Icon(
+                            Icons.add_location_alt_outlined,
+                            size: 18,
+                          ),
+                          label: const Text('Usar el centro del mapa'),
                         ),
-                        label: const Text('Usar el centro del mapa'),
-                      ),
-                      if (_selection.pickup != null &&
-                          _selection.pickup == _selection.destination)
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: 8),
+                        if (_selection.pickup != null &&
+                            _selection.pickup == _selection.destination)
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              'El destino debe ser diferente de la recogida.',
+                              style: TextStyle(color: Color(0xffa02a24)),
+                            ),
+                          ),
+                        FilledButton(
+                          onPressed: canContinue ? _continue : null,
                           child: Text(
-                            'El destino debe ser diferente de la recogida.',
-                            style: TextStyle(color: Color(0xffa02a24)),
+                            _pickingOne
+                                ? 'Guardar ubicación'
+                                : pickingPickup
+                                ? 'Confirmar recogida'
+                                : 'Revisar puntos',
                           ),
                         ),
-                      FilledButton(
-                        onPressed: canContinue ? _continue : null,
-                        child: Text(
-                          _pickingOne
-                              ? 'Guardar ubicación'
-                              : pickingPickup
-                              ? 'Confirmar recogida'
-                              : 'Revisar puntos',
+                        const SizedBox(height: 8),
+                        Text(
+                          widget.demoMode
+                              ? 'Modo demo · viajes simulados, sin cobros'
+                              : 'Vista previa del mapa · sin solicitud de viaje',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xff52615a),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        widget.demoMode
-                            ? 'Modo demo · sin viajes ni cobros'
-                            : 'Vista previa del mapa · sin solicitud de viaje',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xff52615a),
-                        ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  },
                 ),
               ),
             ),
