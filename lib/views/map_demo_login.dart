@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../home.dart';
+import 'role_choice_screen.dart';
 
 /// Isolated local preview. It never signs into Firebase or sends an SMS.
 class MapDemoLogin extends StatefulWidget {
@@ -30,9 +30,7 @@ class _MapDemoLoginState extends State<MapDemoLogin> {
     } else {
       Navigator.push(
         context,
-        MaterialPageRoute<void>(
-          builder: (_) => const HomeScreen(demoMode: true),
-        ),
+        MaterialPageRoute<void>(builder: (_) => const RoleChoiceScreen()),
       );
     }
   }
@@ -104,7 +102,7 @@ class _MapDemoLoginState extends State<MapDemoLogin> {
                   const SizedBox(height: 24),
                   FilledButton(
                     onPressed: _continue,
-                    child: Text(_verifying ? 'Entrar al mapa' : 'Continuar'),
+                    child: Text(_verifying ? 'Entrar' : 'Continuar'),
                   ),
                   if (_verifying)
                     TextButton(
@@ -118,7 +116,7 @@ class _MapDemoLoginState extends State<MapDemoLogin> {
                     ),
                   const SizedBox(height: 24),
                   const Text(
-                    'Acceso simulado para probar el mapa.\nSin cuenta, viajes ni cobros reales.',
+                    'Acceso simulado para probar Ztaxi.\nSin cuenta, viajes ni cobros reales.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Color(0xff52615a)),
                   ),

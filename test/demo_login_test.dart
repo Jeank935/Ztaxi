@@ -13,7 +13,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Código de prueba'), findsOneWidget);
     await tester.enterText(find.byKey(const ValueKey('demo-code')), '000000');
-    await tester.tap(find.text('Entrar al mapa'));
+    await tester.tap(find.text('Entrar'));
     await tester.pumpAndSettle();
     expect(find.text('Escribe el código de prueba 123456.'), findsOneWidget);
     expect(find.text('Modo demo · sin viajes ni cobros'), findsNothing);

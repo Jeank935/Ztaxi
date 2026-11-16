@@ -24,6 +24,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Ztaxi usa la cámara para la foto de perfil y los documentos del registro de conductor.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Ztaxi usa tus fotos para elegir la foto de perfil y los documentos del registro de conductor.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

@@ -164,7 +164,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 widget.onOpenProfile?.call();
                               }
                               if (value == 'credits') showMapCredits(context);
-                              if (value == 'exit') Navigator.pop(context);
+                              if (value == 'exit') {
+                                Navigator.popUntil(
+                                  context,
+                                  (route) => route.isFirst,
+                                );
+                              }
                             },
                             itemBuilder:
                                 (_) => [

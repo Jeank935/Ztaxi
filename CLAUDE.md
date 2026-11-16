@@ -36,8 +36,8 @@ Toolchain: Dart SDK `>=3.7`. Android builds need SDK API 36 and JDK 21 (AGP 8.13
 
 `const demoMode = bool.fromEnvironment('ZTAXI_DEMO', defaultValue: true)` decides which mode the app starts in:
 
-- **Demo (default):** `MapDemoLogin` → `HomeScreen(demoMode: true)`. Firebase is **never initialized** and no SMS is sent. The phone number and code are hard-coded test values. Navigation uses plain `Navigator`.
-- **Live (`ZTAXI_DEMO=false`):** initializes Firebase and shows a configuration error if the options still contain `YOUR_` placeholders. It then `Get.put(AuthController())` and calls `decideRoute()`, which reads `users/{uid}` and sends the user to `HomeScreen`, `ProfileSettingScreen`, or `DriverProfileSetup`. This path uses GetX navigation (`Get.to`/`Get.offAll`).
+- **Demo (default):** `MapDemoLogin` → `RoleChoiceScreen` → either `HomeScreen(demoMode: true)` (passenger) or the driver registration backed by `InMemoryDriverRepository`. Firebase is **never initialized** and no SMS is sent. The phone number and code are hard-coded test values. Navigation uses plain `Navigator`.
+- **Live (`ZTAXI_DEMO=false`):** initializes Firebase and shows a configuration error if the options still contain `YOUR_` placeholders. It then `Get.put(AuthController())` and calls `decideRoute()`, which reads `users/{uid}` and sends the user to `HomeScreen`, `ProfileSettingScreen`, or `DriverOnboardingScreen` with `FirestoreDriverRepository`. This path uses GetX navigation (`Get.to`/`Get.offAll`). The driver branch is only reached when `AuthController.isLoginAsDriver` is true, and nothing sets it yet.
 
 Keep demo code free of Firebase calls. The widget tests pump `MyApp()` with no Firebase setup and rely on that.
 
@@ -57,6 +57,14 @@ The Zamora bounds appear in two places: `isInZamoraPreview()` and `cameraTargetB
 - As the **trip picker** (default): the user picks pickup and then destination, and a review sheet opens. It does not request a trip.
 - As the **single-point picker**, when `pointPickerTitle` is set. `ProfileSettingScreen` pushes it and receives the chosen `GeoCoordinate` from `Navigator.pop`.
 
+### Driver registration (`lib/driver/`)
+
+It follows the same split as the map layer: the domain types know nothing about Firebase or widgets, and screens receive their repository through the constructor (no GetX).
+
+- `driver_application.dart`: `DriverApplication.create()` validates the input and throws `ArgumentError`. The form uses the same `DriverValidators`, so the two can't disagree. Plates are normalized to `ABC-1234`. Photos are `DriverPhoto` bytes rather than `dart:io File`, because `File` doesn't work on web.
+- `DriverRepository` has two implementations. `InMemoryDriverRepository` is used by the demo. `FirestoreDriverRepository` writes the legacy field names to `users/{uid}`, uploads photos to `drivers/{uid}/…`, and sets `driver_status: 'pendiente'`. It has not been tested against a real Firebase project.
+- `DriverOnboardingScreen` steps through personal data → vehicle → optional documents → review, then replaces itself with `VerificationPendingScreen`. The `pickPhoto` parameter takes a `PhotoPicker`, which lets tests supply photos without the platform picker.
+
 ### Persistence
 
 User profiles live in the Firestore document `users/{uid}`. Saved places (`home_latlng`, `business_latlng`, `shopping_latlng`) are stored as Firestore `GeoPoint`s. `UserModel._coordinate` converts them to `GeoCoordinate` by duck typing and returns `null` for malformed data. Keep the `GeoPoint` format so existing data needs no migration.
@@ -68,7 +76,7 @@ User profiles live in the Firestore document `users/{uid}`. Saved places (`home_
 - **Payments:** the legacy card code (`AuthController.storeUserCard`, `views/payment.dart`, `add_payment_*`) writes card number and CVV to Firestore. Don't extend it or route users to it. Replace it with a tokenizing payment gateway before enabling payments.
 - **Firebase config:** `lib/firebase_options.dart` and `firebase.json` still point at the origin project (`elitetaxi-61f40`). They must be regenerated with `flutterfire configure` against Ztaxi's own project.
 - **Android:** release builds currently sign with the debug config, and the application ID is still `com.example.elite_taxi_app`. Neither is acceptable for distribution.
-- **Legacy code:** `lib/driver/`, the OTP widgets, and `AppConstant` are inherited English/Arabic code that hasn't been validated yet.
+- **Legacy code:** the live login and OTP screens (`views/login_screen.dart`, `otp_verification_screen.dart`, `widgets/`), `AppConstant`, and the payment views are inherited English/Arabic code that hasn't been validated yet.
 
 ## UI conventions (from `DESIGN.md` / `PRODUCT.md`)
 
