@@ -53,7 +53,7 @@ dependencies:
 
 dev_dependencies:
   build_runner: ^2.4.6
-  flutter_gen_runner: ^5.3.1 # Ø¥Ø°Ø§ ÙƒÙ†Øª ØªØ³ØªØ®Ø¯Ù… flutter_gen
+  flutter_gen_runner: ^5.3.1 # genera lib/gen/assets.gen.dart
   flutter_test:
     sdk: flutter
 
