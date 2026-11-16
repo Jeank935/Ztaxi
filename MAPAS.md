@@ -4,8 +4,9 @@ La aplicación usa Flutter y `maplibre_gl` 0.27.1. En Android e iOS el mapa lo r
 
 ## Probar ahora
 
+Desde la carpeta del proyecto:
+
 ```powershell
-cd "C:\Users\ASUS FLOW\Desktop\ZamoraTaxi\Ztaxi"
 flutter pub get
 flutter run -d chrome
 ```
