@@ -1,48 +1,56 @@
 import 'package:flutter/material.dart';
 
-import '../../../widgets/green_intro_widget.dart';
+/// Shown after a driver submits the registration.
+class VerificationPendingScreen extends StatelessWidget {
+  const VerificationPendingScreen({super.key, this.demoMode = false});
 
-
-class VerificaitonPendingScreen extends StatefulWidget {
-  const VerificaitonPendingScreen({super.key});
+  final bool demoMode;
 
   @override
-  State<VerificaitonPendingScreen> createState() => _VerificaitonPendingScreenState();
-}
-
-class _VerificaitonPendingScreenState extends State<VerificaitonPendingScreen> {
-
-
-   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-
-          greenIntroWidgetWithoutLogos(title: 'Verification!',subtitle: 'process status'),
-
-          const SizedBox(height: 20,),
-
-
-          Expanded(child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text('Verification Pending',style: TextStyle(fontSize: 22,fontWeight: FontWeight.w600,color: Colors.black),),
-              const SizedBox(height: 20,),
-
-
-              Text('Your document is still pending for verification. Once it’s all verified you start getting rides. please sit tight',style: TextStyle(fontSize: 16,fontWeight: FontWeight.w400,color: Color(0xff7D7D7D)),textAlign: TextAlign.center,),
-
-            ],
-          )),
-          const SizedBox(height: 40,),
-
-
-
-
-        ],
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Tu registro')),
+    body: SafeArea(
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.hourglass_top_rounded,
+                  size: 48,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Verificación pendiente',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Recibimos tus datos. Quedan pendientes de verificación y '
+                  'todavía no puedes recibir viajes.',
+                  textAlign: TextAlign.center,
+                ),
+                if (demoMode) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Modo demo: el registro se guardó solo en este dispositivo '
+                    'mientras la app está abierta. Nadie lo revisará.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Color(0xff52615a)),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
       ),
-    );
-  }
+    ),
+  );
 }

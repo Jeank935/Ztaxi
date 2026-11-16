@@ -1,4 +1,4 @@
-import 'package:elite_taxi_app/main.dart';
+import 'package:ztaxi/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -8,15 +8,15 @@ void main() {
   ) async {
     await tester.pumpWidget(const MyApp());
     expect(find.text('Teléfono de prueba'), findsOneWidget);
-    expect(find.text('Modo demo · sin viajes ni cobros'), findsNothing);
+    expect(find.text('Modo demo · viajes simulados, sin cobros'), findsNothing);
     await tester.tap(find.text('Continuar'));
     await tester.pumpAndSettle();
     expect(find.text('Código de prueba'), findsOneWidget);
     await tester.enterText(find.byKey(const ValueKey('demo-code')), '000000');
-    await tester.tap(find.text('Entrar al mapa'));
+    await tester.tap(find.text('Entrar'));
     await tester.pumpAndSettle();
     expect(find.text('Escribe el código de prueba 123456.'), findsOneWidget);
-    expect(find.text('Modo demo · sin viajes ni cobros'), findsNothing);
+    expect(find.text('Modo demo · viajes simulados, sin cobros'), findsNothing);
   });
 
   testWidgets(

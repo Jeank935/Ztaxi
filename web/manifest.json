@@ -1,11 +1,11 @@
 {
-    "name": "elite_taxi_app",
-    "short_name": "elite_taxi_app",
+    "name": "Ztaxi",
+    "short_name": "Ztaxi",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#f8faf8",
+    "theme_color": "#214e39",
+    "description": "Aplicación de taxis para pasajeros y conductores en Zamora, Ecuador.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:elite_taxi_app/driver/car_registration/car_registration_template.dart';
-import 'package:elite_taxi_app/driver/profile_setup.dart';
-import 'package:elite_taxi_app/home.dart';
-import 'package:elite_taxi_app/models/user_model/user_model.dart';
-import 'package:elite_taxi_app/views/profile_settings.dart';
+import 'package:ztaxi/driver/driver_onboarding_screen.dart';
+import 'package:ztaxi/driver/firestore_driver_repository.dart';
+import 'package:ztaxi/home.dart';
+import 'package:ztaxi/models/user_model/user_model.dart';
+import 'package:ztaxi/views/profile_settings.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -99,7 +99,11 @@ class AuthController extends GetxController {
               if (value.exists) {
                 print("Driver HOme Screen");
               } else {
-                Get.offAll(() => DriverProfileSetup());
+                Get.offAll(
+                  () => DriverOnboardingScreen(
+                    repository: FirestoreDriverRepository(),
+                  ),
+                );
               }
             } else {
               if (value.exists) {
@@ -119,50 +123,6 @@ class AuthController extends GetxController {
             print("Error while decideRoute is $e");
           });
     }
-  }
-  //store profile
-
-  storeDriverProfile(
-    File? selectedImage,
-    String name,
-    String email, {
-    String url = '',
-  }) async {
-    String urlNew = url;
-    if (selectedImage != null) {
-      urlNew = await uploadImage(selectedImage);
-    }
-    String uid = FirebaseAuth.instance.currentUser!.uid;
-    FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .set({
-          'image': urlNew,
-          'name': name,
-          'email': email,
-          'isDriver': true,
-        }, SetOptions(merge: true))
-        .then((value) {
-          isProfileUploading(false);
-
-          Get.off(() => CarRegistrationTemplate());
-        });
-  }
-
-  var isCarEntryUploading = false.obs;
-
-  Future<bool> uploadCarEntry(Map<String, dynamic> carData) async {
-    bool isUploaded = false;
-    String uid = FirebaseAuth.instance.currentUser!.uid;
-
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .set(carData, SetOptions(merge: true));
-
-    isUploaded = true;
-
-    return isUploaded;
   }
 
   uploadImage(File image) async {

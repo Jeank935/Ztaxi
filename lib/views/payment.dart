@@ -1,6 +1,6 @@
-import 'package:elite_taxi_app/controller/auth_controller.dart';
-import 'package:elite_taxi_app/utlis/app_colors.dart';
-import 'package:elite_taxi_app/views/add_payment_card_screen.dart';
+import 'package:ztaxi/controller/auth_controller.dart';
+import 'package:ztaxi/utlis/app_colors.dart';
+import 'package:ztaxi/views/add_payment_card_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_credit_card/flutter_credit_card.dart';
 import 'package:get/get.dart';

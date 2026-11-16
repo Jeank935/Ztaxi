@@ -1,6 +1,6 @@
 class AppConstant {
   static const String helloNiceToMeetYou = 'Hello , Nice to meet you';
-  static const String getMovingWhiteGreenTaxi = 'Get moving with Elite taxi';
+  static const String getMovingWhiteGreenTaxi = 'Muévete con Ztaxi';
   static const String enterMobileNumber = 'Enter your mobile number';
   static const String byCreating = 'By creating an account , you agree to our';
   static const String termsOfService = 'Terms of Service';

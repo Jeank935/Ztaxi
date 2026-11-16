@@ -4,13 +4,19 @@ La aplicación usa Flutter y `maplibre_gl` 0.27.1. En Android e iOS el mapa lo r
 
 ## Probar ahora
 
+Desde la carpeta del proyecto:
+
 ```powershell
-cd "C:\Users\ASUS FLOW\Desktop\ZamoraTaxi\Ztaxi"
 flutter pub get
 flutter run -d chrome
 ```
 
-La entrada predeterminada es una demo aislada: teléfono `0990000000`, código `123456`. No inicializa Firebase ni crea sesiones o SMS. Selecciona la recogida y el destino tocando el mapa o usando su centro. Los puntos se conservan en memoria mientras editas; aún no se guardan como viajes ni se calcula una ruta por calles. No hay conductores, tarifas, pagos ni solicitudes reales en este flujo. No se solicita GPS: «Volver al centro de Zamora» centra una coordenada de referencia.
+La entrada predeterminada es una demo aislada: teléfono `0990000000`, código `123456`. No inicializa Firebase ni crea sesiones o SMS. Después del acceso eliges «Soy pasajero» o «Soy conductor».
+
+- **Pasajero:** selecciona la recogida y el destino tocando el mapa o usando su centro. Al revisar los puntos puedes enviar una solicitud simulada: la pantalla muestra «Buscando conductor…» hasta que la canceles. No se avisa a ningún conductor, no se calcula una ruta por calles y no hay tarifas ni pagos. Mientras la solicitud está activa, los puntos no cambian; al cancelarla se conservan para seguir editando.
+- **Conductor:** registro en tres pasos (datos, vehículo, documentos opcionales) y revisión. El registro queda en memoria y termina en «Verificación pendiente»; nadie lo revisa.
+
+Todo se pierde al cerrar la app. No se solicita GPS: «Volver al centro de Zamora» centra una coordenada de referencia.
 
 El rectángulo permitido es un área técnica de prueba alrededor de Zamora, no un límite administrativo ni una zona de servicio aprobada. Los puntos muestran coordenadas; búsqueda de locales, direcciones y rutas se integrarán mediante servicios independientes. No se conectan servicios públicos de geocodificación o rutas sin revisar primero sus condiciones de uso y capacidad.
 

@@ -1,0 +1,99 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this is
+
+Ztaxi is a passenger/driver taxi app for Zamora, Ecuador, built on a fork of the MIT-licensed Elite Taxi Flutter app (see `IMPORTACION-ZTAXI.md`). Android is the first target and iOS is not yet validated. It is not production-ready. Right now the only working flow is a simulated login followed by a MapLibre map where the user picks pickup and destination points. There are no real trips, routes, drivers, fares, or payments yet.
+
+`MAPAS.md`, `PRODUCT.md` and `DESIGN.md` are the current source of truth. Most of `README.md`, plus `ARCHITECTURE.md`, `SETUP.md` and `CONTRIBUTING.md`, describe the original Elite Taxi project: Google Maps, the `packages/google_api_headers` package (since removed), and `polyline_handler.dart` (since removed). Treat them as historical.
+
+The Dart package name is `ztaxi`, so imports look like `package:ztaxi/...`. The Android `applicationId`/`namespace` (`com.example.elite_taxi_app`) and the iOS bundle ID (`com.example.eliteTaxiApp`) have not been renamed yet; the final ID is still undecided. The utilities folder is spelled `lib/utlis/`, not `utils`.
+
+## Commands
+
+```powershell
+flutter pub get
+flutter run -d chrome                                  # default: isolated demo (phone 0990000000, code 123456)
+flutter run -d chrome --dart-define=ZTAXI_DEMO=false   # original Firebase login path
+flutter run -d <device-id>                             # Android device/emulator (see `flutter devices`)
+
+flutter test                                           # all tests
+flutter test test/trip_selection_test.dart             # one file
+flutter test --plain-name "requires distinct points"   # one test by name substring
+
+flutter analyze lib test        # global analyze still reports warnings in legacy modules (payments, driver)
+flutter build web --release
+
+dart run build_runner build --delete-conflicting-outputs   # regenerates lib/gen/assets.gen.dart (flutter_gen)
+```
+
+Toolchain: Dart SDK `>=3.7`. Android builds need SDK API 36 and JDK 21 (AGP 8.13.2, Gradle 8.13, Kotlin 2.4.10). The iOS minimum is 15 because of Firebase. Running in Chrome only checks the UI through MapLibre GL JS. It says nothing about native performance or compatibility.
+
+## Architecture
+
+### Two entry modes (`lib/main.dart`)
+
+`const demoMode = bool.fromEnvironment('ZTAXI_DEMO', defaultValue: true)` decides which mode the app starts in:
+
+- **Demo (default):** `MapDemoLogin` → `RoleChoiceScreen` → either `HomeScreen(demoMode: true)` (passenger) or the driver registration backed by `InMemoryDriverRepository`. Firebase is **never initialized** and no SMS is sent. The phone number and code are hard-coded test values. Navigation uses plain `Navigator`.
+- **Live (`ZTAXI_DEMO=false`):** initializes Firebase and shows a configuration error if the options still contain `YOUR_` placeholders. It then `Get.put(AuthController())` and calls `decideRoute()`, which reads `users/{uid}` and sends the user to `HomeScreen`, `ProfileSettingScreen`, or `DriverOnboardingScreen` with `FirestoreDriverRepository`. This path uses GetX navigation (`Get.to`/`Get.offAll`). The driver branch is only reached when `AuthController.isLoginAsDriver` is true, and nothing sets it yet.
+
+Keep demo code free of Firebase calls. The widget tests pump `MyApp()` with no Firebase setup and rely on that.
+
+### Map layer (`lib/maps/`)
+
+The layers are deliberately separated so the map renderer and the database can each be replaced:
+
+- `GeoCoordinate` is a plain lat/lng value with no SDK dependencies. It also defines `zamoraCenter` and `isInZamoraPreview()`, a rectangular test viewport. That rectangle is not an administrative boundary or an approved service area.
+- `TripSelection` is an immutable value object for pickup, destination, and which of the two is active. `choose()` throws `ArgumentError` for invalid or out-of-area points and leaves the previous selection untouched. `isComplete` requires the two points to be different.
+- `ZamoraMap` is the **only** place MapLibre types may appear. It loads the `assets/zamora-night.json` style, whose tiles are served by OpenFreeMap. Parents control it through `GlobalKey<ZamoraMapState>` (`recenter()`, `selectCenter()`). Marker updates go through a `_pending` future chain with a `_generation` counter, so quick taps and map retries can't race each other. Keep that pattern when adding layers or markers.
+- `map_credits.dart` holds the attribution dialog. The OSM/OpenMapTiles/OpenFreeMap attribution must stay visible (ODbL requirement).
+
+The Zamora bounds appear in two places: `isInZamoraPreview()` and `cameraTargetBounds` in `zamora_map.dart`. Keep them in sync.
+
+### `HomeScreen` is used two ways (`lib/home.dart`)
+
+- As the **trip picker** (default): the user picks pickup and then destination, and a review sheet opens. If a `tripRepository` is passed (the demo passes `InMemoryTripRepository` from `RoleChoiceScreen`), the sheet offers «Solicitar taxi (simulado)». While a request is active, the bottom tray shows `TripStatusPanel` and map taps are ignored. Without a repository (server mode, for now) the screen only previews the points.
+- When `HomeScreen` opens while a request is already active, it restores that request's points. The tray's scroll view is keyed by request state so the status panel always opens at the top.
+- **Testing:** `test/home_trip_test.dart` tests the screen without the native map. It makes the `flutter/assets` style load fail, which leaves `ZamoraMap` in its error state, and calls `ZamoraMap.onSelect` directly. It also clears `rootBundle` before and after each test, because a cached future from one test never completes in the next. The search spinner never settles, so use `pump` with a duration instead of `pumpAndSettle` while a request is active.
+- As the **single-point picker**, when `pointPickerTitle` is set. `ProfileSettingScreen` pushes it and receives the chosen `GeoCoordinate` from `Navigator.pop`.
+
+### Driver registration (`lib/driver/`)
+
+It follows the same split as the map layer: the domain types know nothing about Firebase or widgets, and screens receive their repository through the constructor (no GetX).
+
+- `driver_application.dart`: `DriverApplication.create()` validates the input and throws `ArgumentError`. The form uses the same `DriverValidators`, so the two can't disagree. Plates are normalized to `ABC-1234`. Photos are `DriverPhoto` bytes rather than `dart:io File`, because `File` doesn't work on web.
+- `DriverRepository` has two implementations. `InMemoryDriverRepository` is used by the demo. `FirestoreDriverRepository` writes the legacy field names to `users/{uid}`, uploads photos to `drivers/{uid}/…`, and sets `driver_status: 'pendiente'`. It has not been tested against a real Firebase project.
+  - License and registration photos are saved as Storage paths (`license_path`, `registration_path`), not download links, because anyone with a download link can open the file. Only the profile `image` is stored as a link.
+  - Submits time out after 60 s, with a 30 s upload retry limit, so a weak connection can't leave the driver stuck on the spinner.
+  - Its security depends on rules that don't exist yet. Firestore must accept only `driver_status: 'pendiente'` from the app; otherwise a driver could approve themselves. Storage must restrict `drivers/{uid}` to its owner and reviewers.
+- `DriverOnboardingScreen` steps through personal data → vehicle → optional documents → review, then replaces itself with `VerificationPendingScreen`. The `pickPhoto` parameter takes a `PhotoPicker`, which lets tests supply photos without the platform picker.
+
+### Trip requests (`lib/trips/`)
+
+- `TripRequest.fromSelection()` only accepts a complete `TripSelection` and throws `ArgumentError` otherwise. `TripStatus` is `searchingDriver` or `cancelled`.
+- `TripRepository` exposes `request`, `cancel`, and `watchActive`. Only one request can be active at a time; a second one throws `TripRequestException`. `InMemoryTripRepository.watchActive` takes the snapshot and subscribes inside `onListen`, so a listener can't miss a change. Don't replace it with an `async*` generator, which reintroduces that race. There is no Firestore implementation yet.
+- `TripStatusPanel` never invents a driver, fare, or arrival time.
+
+### Persistence
+
+User profiles live in the Firestore document `users/{uid}`. Saved places (`home_latlng`, `business_latlng`, `shopping_latlng`) are stored as Firestore `GeoPoint`s. `UserModel._coordinate` converts them to `GeoCoordinate` by duck typing and returns `null` for malformed data. Keep the `GeoPoint` format so existing data needs no migration.
+
+## Constraints and known hazards
+
+- **Map stack:** use native MapLibre through `maplibre_gl` 0.27.1 (exact pin). Don't rewrite the app in React, don't embed mapcn or other web maps in a WebView, and don't bring Google Maps or Directions back.
+- **Routes and addresses:** never draw a straight line and present it as a route. Points are shown as coordinates until a geocoding or routing service is added. Don't connect public geocoding or routing APIs before reviewing their terms of use and capacity limits.
+- **Payments:** the legacy card code (`AuthController.storeUserCard`, `views/payment.dart`, `add_payment_*`) writes card number and CVV to Firestore. Don't extend it or route users to it. Replace it with a tokenizing payment gateway before enabling payments.
+- **Firebase config:** `lib/firebase_options.dart` and `firebase.json` still point at the origin project (`elitetaxi-61f40`). They must be regenerated with `flutterfire configure` against Ztaxi's own project.
+- **Android:** release builds currently sign with the debug config, and the application ID is still `com.example.elite_taxi_app`. Neither is acceptable for distribution.
+- **Legacy code:** the live login and OTP screens (`views/login_screen.dart`, `otp_verification_screen.dart`, `widgets/`), `AppConstant`, and the payment views are inherited English/Arabic code that hasn't been validated yet.
+
+## UI conventions (from `DESIGN.md` / `PRODUCT.md`)
+
+- All user-facing text is in **Spanish** and kept simple.
+- The map is dark blue-grey with few labels, no 3D buildings, readable main roads, and muted green for points of interest.
+- Color tokens: ground `#414650`, water `#303741`, roads `#525b66`/`#7a858e`, references `#a9cfbc`, surface `#f8faf8`, text `#17251f`, primary action `#214e39`.
+- Use the platform font. Don't download a font.
+- Controls are at least 48 px. The bottom sheet must scroll on small screens. Map credits stay outside the sheet.
+- Design for these states: simulated access, pickup pending, destination pending, identical points, out-of-area point, point review, credits, map load error/timeout, and marker error.
